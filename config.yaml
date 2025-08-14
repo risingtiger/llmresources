@@ -1,0 +1,5 @@
+search_root: /Users/dave/Code
+fuzzy_search:
+  show_hidden: false
+  max_depth: 2
+  prompt: "Select directory > "
