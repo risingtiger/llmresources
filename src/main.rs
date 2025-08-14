@@ -428,6 +428,10 @@ fn show_summary(selected_files: &[ConventionFile], target_dir: &Path) -> Result<
         println!("   {}", style(target_path.display()).blue().underlined());
     }
     
+    // Show agents folder symlink destination
+    let agents_target = target_dir.join("AGENTS");
+    println!("   {} (folder)", style(agents_target.display()).blue().underlined());
+    
     println!();
     println!("{}", style("─".repeat(50)).dim());
     
@@ -517,6 +521,36 @@ fn compile_files(selected_files: &[ConventionFile], target_dir: &Path) -> Result
         println!("  ✅ Created symlink: {} -> {}", 
                 style(name).cyan(), 
                 style(absolute_combined_path.display()).dim());
+    }
+    
+    // Create symlink for agents folder
+    let agents_source = Path::new("conventions/agents");
+    let agents_target = target_dir.join("AGENTS");
+    
+    if agents_source.exists() {
+        // Remove existing symlink/directory if it exists
+        if agents_target.exists() || agents_target.is_symlink() {
+            if agents_target.is_dir() && !agents_target.is_symlink() {
+                fs::remove_dir_all(&agents_target)
+                    .context("Failed to remove existing AGENTS directory")?;
+            } else {
+                fs::remove_file(&agents_target)
+                    .context("Failed to remove existing AGENTS symlink")?;
+            }
+        }
+        
+        // Get absolute path for the agents folder
+        let absolute_agents_path = agents_source.canonicalize()
+            .context("Failed to get absolute path for conventions/agents")?;
+        
+        // Create symlink to agents folder
+        unix_fs::symlink(&absolute_agents_path, &agents_target)
+            .context("Failed to create symlink for AGENTS folder")?;
+        
+        println!("  ✅ Created symlink: AGENTS -> {}", 
+                style(absolute_agents_path.display()).dim());
+    } else {
+        println!("  ⚠️  Skipped AGENTS symlink: conventions/agents folder not found");
     }
     
     println!();
